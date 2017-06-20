@@ -16,16 +16,15 @@
 
 package org.springframework.cloud.stream.reactive;
 
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
-
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.cloud.stream.annotation.Output;
@@ -47,7 +46,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class StreamEmitterBasicTests {
 
-	@Ignore("Will address later")
 	@Test
 	public void testFluxReturnAndOutputMethodLevel() throws Exception {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
@@ -107,11 +105,11 @@ public class StreamEmitterBasicTests {
 		Source source = context.getBean(Source.class);
 		MessageCollector messageCollector = context.getBean(MessageCollector.class);
 		List<String> messages = new ArrayList<>();
-		for (int i = 0; i < 1000; i ++) {
-			messages.add((String)messageCollector.forChannel(source.output()).poll(5000, TimeUnit.MILLISECONDS).getPayload());
+		for (int i = 0; i < 1000; i++) {
+			messages.add((String) messageCollector.forChannel(source.output()).poll(5000, TimeUnit.MILLISECONDS).getPayload());
 		}
-		for (int i = 0; i < 1000; i ++) {
-			assertThat(messages.get(i)).isEqualTo("Hello World!!" + i);
+		for (int i = 0; i < 1000; i++) {
+			assertThat(messages.get(i)).isEqualTo("HELLO WORLD!!" + i);
 		}
 	}
 
@@ -141,28 +139,28 @@ public class StreamEmitterBasicTests {
 	}
 
 	private static void assertMessages(MessageChannel channel, MessageCollector messageCollector, List<String> messages) throws InterruptedException {
-		for (int i = 0; i < 1000; i ++) {
-			messages.add((String)messageCollector.forChannel(channel).poll(5000, TimeUnit.MILLISECONDS).getPayload());
+		for (int i = 0; i < 1000; i++) {
+			messages.add((String) messageCollector.forChannel(channel).poll(5000, TimeUnit.MILLISECONDS).getPayload());
 		}
-		for (int i = 0; i < 1000; i ++) {
+		for (int i = 0; i < 1000; i++) {
 			assertThat(messages.get(i)).isEqualTo("Hello World!!" + i);
 		}
 	}
 
 	private static void assertMessagesX(MessageChannel channel, MessageCollector messageCollector, List<String> messages) throws InterruptedException {
-		for (int i = 0; i < 1000; i ++) {
-			messages.add((String)messageCollector.forChannel(channel).poll(5000, TimeUnit.MILLISECONDS).getPayload());
+		for (int i = 0; i < 1000; i++) {
+			messages.add((String) messageCollector.forChannel(channel).poll(5000, TimeUnit.MILLISECONDS).getPayload());
 		}
-		for (int i = 0; i < 1000; i ++) {
+		for (int i = 0; i < 1000; i++) {
 			assertThat(messages.get(i)).isEqualTo("Hello World!!" + i);
 		}
 	}
 
 	private static void assertMessagesY(MessageChannel channel, MessageCollector messageCollector, List<String> messages) throws InterruptedException {
-		for (int i = 0; i < 1000; i ++) {
-			messages.add((String)messageCollector.forChannel(channel).poll(5000, TimeUnit.MILLISECONDS).getPayload());
+		for (int i = 0; i < 1000; i++) {
+			messages.add((String) messageCollector.forChannel(channel).poll(5000, TimeUnit.MILLISECONDS).getPayload());
 		}
-		for (int i = 0; i < 1000; i ++) {
+		for (int i = 0; i < 1000; i++) {
 			assertThat(messages.get(i)).isEqualTo("Hello FooBar!!" + i);
 		}
 	}
@@ -179,6 +177,7 @@ public class StreamEmitterBasicTests {
 			return IntegrationFlows.from(() ->
 							new GenericMessage<>("Hello World!!" + atomicInteger.getAndIncrement()),
 					e -> e.poller(p -> p.fixedDelay(1)))
+					.<String, String>transform(String::toUpperCase)
 					.toReactivePublisher();
 		}
 
@@ -191,7 +190,8 @@ public class StreamEmitterBasicTests {
 		@StreamEmitter
 		public void emit(@Output(Source.OUTPUT) FluxSender output) {
 			output.send(Flux.intervalMillis(1)
-					.map(l -> "Hello World!!" + l));
+					.map(l -> "Hello World!!" + l)
+					.map(String::toUpperCase));
 		}
 	}
 
@@ -203,7 +203,8 @@ public class StreamEmitterBasicTests {
 		@Output(Source.OUTPUT)
 		public void emit(FluxSender output) {
 			output.send(Flux.intervalMillis(1)
-					.map(l -> "Hello World!!" + l));
+					.map(l -> "Hello World!!" + l)
+					.map(String::toUpperCase));
 		}
 	}
 
@@ -213,8 +214,8 @@ public class StreamEmitterBasicTests {
 
 		@StreamEmitter
 		public void emit(@Output(TestMultiOutboundChannels.OUTPUT1) FluxSender output1,
-						@Output(TestMultiOutboundChannels.OUTPUT2) FluxSender output2,
-						@Output(TestMultiOutboundChannels.OUTPUT3) FluxSender output3) {
+				@Output(TestMultiOutboundChannels.OUTPUT2) FluxSender output2,
+				@Output(TestMultiOutboundChannels.OUTPUT3) FluxSender output3) {
 			output1.send(Flux.intervalMillis(1)
 					.map(l -> "Hello World!!" + l));
 			output2.send(Flux.intervalMillis(1)
@@ -287,7 +288,9 @@ public class StreamEmitterBasicTests {
 	interface TestMultiOutboundChannels {
 
 		String OUTPUT1 = "output1";
+
 		String OUTPUT2 = "output2";
+
 		String OUTPUT3 = "output3";
 
 		@Output(TestMultiOutboundChannels.OUTPUT1)

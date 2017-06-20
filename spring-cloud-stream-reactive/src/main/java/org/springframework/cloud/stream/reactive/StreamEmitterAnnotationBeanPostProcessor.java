@@ -28,6 +28,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.beans.factory.BeanInitializationException;
@@ -104,12 +105,13 @@ public class StreamEmitterAnnotationBeanPostProcessor
 
 	@Override
 	public Object postProcessAfterInitialization(final Object bean, final String beanName) throws BeansException {
-		ReflectionUtils.doWithMethods(bean.getClass(), method -> {
-			StreamEmitter streamEmitter = AnnotatedElementUtils.findMergedAnnotation(method, StreamEmitter.class);
-			if (streamEmitter != null) {
-				mappedStreamEmitterMethods.add(bean, method);
-			}
-		}, ReflectionUtils.USER_DECLARED_METHODS);
+		Class<?> targetClass = AopUtils.getTargetClass(bean);
+		ReflectionUtils.doWithMethods(targetClass,
+				method -> {
+					if (AnnotatedElementUtils.isAnnotated(method, StreamEmitter.class)) {
+						mappedStreamEmitterMethods.add(bean, method);
+					}
+				}, ReflectionUtils.USER_DECLARED_METHODS);
 		return bean;
 	}
 
@@ -135,7 +137,7 @@ public class StreamEmitterAnnotationBeanPostProcessor
 		}
 	}
 
-	@SuppressWarnings({"rawtypes", "unchecked"})
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private void invokeSetupMethodOnToTargetChannel(Method method, Object bean, String outboundName) {
 		Object[] arguments = new Object[method.getParameterCount()];
 		Object targetBean = null;
